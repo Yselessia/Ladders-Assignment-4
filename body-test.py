@@ -1,6 +1,6 @@
-from nltk.stem import WordNetLemmatizer as wnl
+#from nltk.stem import WordNetLemmatizer as wnl
 import csv
-import Player, Puzzle, Files
+import Interface, Puzzle, Files, App
 """
 puzzle_id,player_id,target,start,hiscore,attempts
 """
@@ -17,9 +17,11 @@ puzzle = {"words":{"meat","book"}, "hiscore":3, "player_id":1, "attempts":1}
     if "hiscore" in puzzle_dict:
         if puzzle_dict["hiscore"] < score:
             puzzle_dict["hiscore"] = score
-    #puzzle_dict["player_id"]=self._player.get_id()"""
+    #puzzle_dict["player_id"]=self.*.get_id()"""
 
 #test - working test
-player1 = Player({"greet":"hiya", "name":"Ruben", "id":1})
-puzzle1 = Puzzle(player1, start="meat", target="book")
+root_window = App() #should this be inside New Interface()
+interface1 = Interface(root_window)
+#{"greet":"hiya", "name":"Ruben", "id":1})
+puzzle1 = Puzzle(interface1, start="meat", target="book")
 puzzle1.user_turn()

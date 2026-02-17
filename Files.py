@@ -1,4 +1,4 @@
-class Files():
+class FileSession():
     """?"""
     def load_puzzle(self):
 

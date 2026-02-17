@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 
 # -----------------------------
 # CONFIG
@@ -9,62 +8,12 @@ theme_colours["bg1"] = "#f0e0d0"
 BOX_SIZE = 50                  # Square input box size
 DEFAULT_COLUMNS = 4            # Boxes per row
 DEFAULT_ROWS = 1               # Number of rows
+WORD_LEN = 4                   #**boxes per row
 
-
-#https://stackoverflow.com/questions/44099594/how-to-make-a-tkinter-canvas-rectangle-with-rounded-corners
-#make a 
-class RoundedFrame(tk.Canvas):
-    """a rounded frame canvas covering most app level styling"""
-    def __init__(self, parent, radius=25, bg=theme_colours["bg1"], **kwargs):
-        super().__init__(parent, bg=bg, highlightthickness=0, **kwargs)
-        self.radius = radius
-        self.bg = bg
-
-        # Create rounded rectangle
-        self.rounded = self.create_round_rectangle(60, 50, 150, 100)
-
-        # Internal frame for widgets
-        self.inner = tk.Frame(self, bg=bg)
-        self.create_window((0, 0), window=self.inner, anchor="nw")
-
-        self.bind("<Configure>", self.resize)
-
-    def create_round_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
-        points = [x1+radius, y1,
-              x1+radius, y1,
-              x2-radius, y1,
-              x2-radius, y1,
-              x2, y1,
-              x2, y1+radius,
-              x2, y1+radius,
-              x2, y2-radius,
-              x2, y2-radius,
-              x2, y2,
-              x2-radius, y2,
-              x2-radius, y2,
-              x1+radius, y2,
-              x1+radius, y2,
-              x1, y2,
-              x1, y2-radius,
-              x1, y2-radius,
-              x1, y1+radius,
-              x1, y1+radius,
-              x1, y1]
-        return self.create_polygon(points, **kwargs, smooth=True)
-
-    def resize(self, event):
-        w, h = event.width, event.height
-        self.coords(self.rounded, 0, 0, w, h)
-        self.itemconfig(self.rounded, width=0)
-
-
-# -----------------------------
-# MAIN APPLICATION
-# -----------------------------
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Menu + Game GUI")
+        self.title("MMMM")
         self.geometry("900x700")
         self.configure(bg=theme_colours["bg1"])
 
@@ -73,14 +22,15 @@ class App(tk.Tk):
 
     def game_screen(self):
         self.clear()
-        frame = RoundedFrame(self, radius=40, bg=theme_colours["bg1"])
-        frame.pack()#(expand=True, fill="both", padx=40, pady=40)
+        canvas = tk.Canvas(self, width=400, height=400, bg=theme_colours["bg1"], highlightthickness=0)
+        canvas = tk.Canvas(self)
+        canvas.pack()#(expand=True, fill="both", padx=40, pady=40)
 
-        title = tk.Label(frame.inner, text="Game", font=("Arial", 20), bg=theme_colours["bg1"])
+        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg1"])
         title.pack(pady=10)
 
         # Container for the dynamic grid
-        self.grid_container = tk.Frame(frame.inner, bg=theme_colours["bg1"])
+        self.grid_container = tk.Frame(canvas, bg=theme_colours["bg1"])
         self.grid_container.pack(pady=20)
 
         # Build initial grid
@@ -96,6 +46,7 @@ class App(tk.Tk):
         self.cols = cols
         self.entries = []
 
+        
         for r in range(rows):
             row_entries = []
             for c in range(cols):
@@ -108,25 +59,61 @@ class App(tk.Tk):
                 entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
                 entry.config(validate="key")
                 entry['validatecommand'] = (entry.register(self.limit_char), "%P")
+
+                # NEW: auto-advance binding
+                entry.bind("<KeyRelease>", lambda e, r=r, c=c: self.on_key(e, r, c))
                 row_entries.append(entry)
-            self.entries.append(row_entries)
+                print(row_entries)
+        self.entries.append(row_entries)
 
         # Center the grid
         self.grid_container.update_idletasks()
         self.grid_container.pack()
 
+
+    def on_key(self, event, row, col):
+        entry = self.entries[row][col]
+        key = event.keysym
+        	
+        # Always enforce a single character
+        text = entry.get()
+        if len(text) > 1:
+            entry.delete(1, tk.END)
+            text = entry.get()
+
+        # --- Move forward when a character is typed ---
+        if len(text) == 1 and key != "BackSpace":
+            if col + 1 < self.cols:
+                self.entries[row][col + 1].focus_set()
+            elif row + 1 < self.rows:
+                self.entries[row + 1][0].focus_set()
+            return
+
+        # --- Move backward on Backspace ---
+        if key == "BackSpace" and text == "":
+            # Previous column
+            if col > 0:
+                prev = self.entries[row][col - 1]
+                prev.focus_set()
+                prev.delete(0, tk.END)
+            # Previous row
+            elif row > 0:
+                prev = self.entries[row - 1][self.cols - 1]
+                prev.focus_set()
+                prev.delete(0, tk.END)
+
+
+
     def limit_char(self, new_value):
-        return len(new_value) <= 1
+        return len(new_value) <= WORD_LEN
 
     def add_row(self):
         self.build_grid(self.rows + 1, self.cols)
 
     def add_column(self):
+        """used when setting up game"""
         self.build_grid(self.rows, self.cols + 1)
 
-    # -------------------------
-    # UTILITY
-    # -------------------------
     def clear(self):
         for widget in self.winfo_children():
             widget.destroy()
@@ -136,11 +123,12 @@ class App(tk.Tk):
 
 
 
+
 if __name__ == "__main__":
     root = App()
     #root.overrideredirect(True) # remove window border 
-    root.config(bg="pink") 
-    root.wm_attributes("-transparentcolor", "pink")
+    #root.config(bg="pink") 
+    #root.wm_attributes("-transparentcolor", "pink")
     # ^ makes bg transparent and non-interactable, allows for custom window shape
     # ^ needs more finesse to consistently use the window menu bar (i.e. drag, close, minimise/maximise)
     root.mainloop()
