@@ -1,9 +1,9 @@
 class Puzzle():
     """Handles the gameplay logic/rules for a game."""
 
-    def __init__(self, interactions:Interface, target:str=None, start:str=None):
+    def __init__(self, interface, target:str="", start:str=""):
         """Initialises class with interactions object, calls \_init_*() function to set other properties"""
-        self._interactions = interactions
+        self._interactions = interface
         if target and start:
             self._init_load(target, start)
         else: 
@@ -56,7 +56,8 @@ class Puzzle():
     def user_turn(self):
         """Each loop represents one turn of the game: input, validation check, win condition/continue check"""
         #I originally used recursion, but changed to a loop as it's better to avoid memory limitations
-        while not exit:
+        
+        while not exit: # type: ignore
             print(self._word_route) #testing
             #gets input of correct length
             word = self._interactions.get_word(length=self._len)

@@ -1,6 +1,6 @@
+import csv, Files, Player, gui
 #from nltk.stem import WordNetLemmatizer as wnl
-import csv
-import Interface, Puzzle, Files, App
+from Puzzle import Puzzle
 """
 puzzle_id,player_id,target,start,hiscore,attempts
 """
@@ -20,8 +20,10 @@ puzzle = {"words":{"meat","book"}, "hiscore":3, "player_id":1, "attempts":1}
     #puzzle_dict["player_id"]=self.*.get_id()"""
 
 #test - working test
-root_window = App() #should this be inside New Interface()
-interface1 = Interface(root_window)
-#{"greet":"hiya", "name":"Ruben", "id":1})
+
+interface1 = gui.Interface()
+
+root_window = gui.App(interface1)
 puzzle1 = Puzzle(interface1, start="meat", target="book")
 puzzle1.user_turn()
+root_window.mainloop()

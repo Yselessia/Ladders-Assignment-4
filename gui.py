@@ -1,4 +1,5 @@
 import tkinter as tk
+import re
 
 # -----------------------------
 # CONFIG
@@ -9,13 +10,31 @@ BOX_SIZE = 50                  # Square input box size
 DEFAULT_COLUMNS = 4            # Boxes per row
 WORD_LEN = 4                   #**boxes per row
 
+class Interface():
+    """Handles interaction with the user/GUI."""
+    
+    def get_word(self, length:int=0):
+        #test
+        print("enter word")
+        iw = input()
+        if length>0:
+            while len(iw) != length:
+                iw=input()
+        return iw
+    def win(self, score):
+        #test
+        print(f"you win. score is {score}")
+    def scores(self):
+        pass
+
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, interface:Interface):
         super().__init__()
-        self.title("MMMM")
+        self.title("LLLL")
         self.geometry("900x700")
         self.configure(bg=theme_colours["bg1"])
 
+        self.interface = interface
         self.game_screen()
     
 
@@ -62,62 +81,48 @@ class App(tk.Tk):
 
                 # auto-advance binding
                 #r = row (as in for loop); c, ditto
-                entry.bind("<KeyRelease>", lambda e, r=r, c=c: self.on_key(e, r, c))
+                entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
                 row_entries.append(entry)
             self.entries.append(row_entries)
             
-
         # Center the grid
         self.grid_container.update_idletasks()
         self.grid_container.pack()
 
 
     def on_key(self, event, row:int, col:int):
-        """When keys pressed, moves cursor to next entrybox"""
+        """When keys pressed, moves cursor to next entrybox. 
+        Calls function []  if enter key <RETURN> is pressed"""
         entry = self.entries[row][col]
         key = event.keysym
-        text = entry.get()
 
         if key == "Return":
-            pass
+            pass #needs to call function
 
+        #Move to prev column on backspace
+        # - never move to previous row
+        # - only move if the widget is empty
         elif key == "BackSpace":
-
-            # --- Move backward on Backspace ---
-            if text == "":
-                #Previous column
-                # never move to previous row
-                if col > 0:
-                    col -= 1
-                self.entries[row][col].focus_set()
-                self.entries[row][col].delete(0, tk.END)
-
+            if col > 0 and entry.get() == "":
+                col -= 1
+            self.entries[row][col].focus_set()          #set focus
+            self.entries[row][col].delete(0, tk.END)    #clear widget
         
         #If key is not backspace,
-        # move forward when a character is typed
+        # move forward when an alphabetical character is typed
         # and always enforce a single character
-        else: 
-            while len(text) > 1:
-                #delete any extra characters
-                entry.delete(1, tk.END)
-                text = text[1:]
-
-                #if this is the last widget in the row
-                # or the next is not empty (end coordinate = 0),
-                if col + 1 == self.cols or self.entries[row][col + 1].index("end") > 0:
-                    # replace the character with the last key hit and exit the loop
-                    entry.insert(text[-1])
-                    break
-
-                else:
-                    #if there is an available blank widget
-                    #insert remaining extra text to blank widget
-                    self.entries[row][col + 1].insert(0,text)
-                    col +=1
-            #finally, move cursor
-            if col + 1 < self.cols:
+        else:
+            #clear widget - incase of very speedy typing! or slow execution ig
+            entry.delete(0, tk.END)     
+            #insert character if its a letter
+            if event.char.isalpha():
+                entry.insert(0,event.char.upper())
+            #finally, move cursor if it can move on and the box is filled
+            if col + 1 < self.cols and self.entries[row][col].get():
                 self.entries[row][col + 1].focus_set()
-            
+
+        #tells tkinter the keypress has already been handled
+        return "break" 
 
     def limit_char(self, new_value):
         return len(new_value) <= WORD_LEN
@@ -126,7 +131,7 @@ class App(tk.Tk):
         self.build_grid(self.rows + 1, self.cols)
 
     def add_column(self):
-        """used when setting up game"""
+        """used when setting up new game"""
         self.build_grid(self.rows, self.cols + 1)
 
     def clear(self):
@@ -140,7 +145,7 @@ class App(tk.Tk):
 
 
 if __name__ == "__main__":
-    root = App()
+    root = App(Interface())
     #root.overrideredirect(True) # remove window border 
     #root.config(bg="pink") 
     #root.wm_attributes("-transparentcolor", "pink")
