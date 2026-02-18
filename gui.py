@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import Entry
 import re
 
 # -----------------------------
@@ -8,11 +9,17 @@ theme_colours = {}
 theme_colours["bg1"] = "#f0e0d0"
 BOX_SIZE = 50                  # Square input box size
 DEFAULT_COLUMNS = 4            # Boxes per row
-WORD_LEN = 4                   #**boxes per row
+
+class CharEntry(Entry):
+    def disable_entry(self):
+        self.configure(state="disabled", disabledbackground=theme_colours["bg1"])
 
 class Interface():
     """Handles interaction with the user/GUI."""
-    
+    def __init__(self):
+        self.word_length = 4
+    def submit(self, new_word):
+        pass #needs to trigger puzzle
     def get_word(self, length:int=0):
         #test
         print("enter word")
@@ -34,7 +41,7 @@ class App(tk.Tk):
         self.geometry("900x700")
         self.configure(bg=theme_colours["bg1"])
 
-        self.interface = interface
+        self._interface = interface
         self.game_screen()
     
 
@@ -53,10 +60,10 @@ class App(tk.Tk):
         self.grid_container.pack(pady=20)
 
         # Build initial grid of char entry-boxes
-        self.build_grid(1, DEFAULT_COLUMNS)
+        self.build_grid()
 
 
-    def build_grid(self, rows, cols):
+    def build_grid(self, rows:int=1, cols:int=DEFAULT_COLUMNS):
         """Rebuilds the grid with given x y """
         for widget in self.grid_container.winfo_children():
             widget.destroy()
@@ -65,30 +72,51 @@ class App(tk.Tk):
         self.cols = cols
         self.entries = []           #list of words
 
-        
         for r in range(rows):
-            row_entries = []        #represents one word (list of letters)
-            for c in range(cols):
-                entry = tk.Entry(
-                    self.grid_container,
-                    width=2,
-                    font=("Arial", 20),
-                    justify="center"
-                )
-                entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
-                entry.config(validate="key")
-                entry['validatecommand'] = (entry.register(self.limit_char), "%P")
+              self.add_row(r)
 
-                # auto-advance binding
-                #r = row (as in for loop); c, ditto
-                entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
-                row_entries.append(entry)
-            self.entries.append(row_entries)
-            
+    def disable_row(self,row:int):
+        for c in self.entries[row]:
+            c.disable_entry()
+
+
+    def add_row(self, r:int=-1):
+        # r is the index of the new row in the grid
+        # if a new row is added after grid creation, the number of rows is incremented
+        # and the previous row is disabled (cannot be typed in)
+        if r < 0:
+            r = self.rows
+            self.rows += 1 
+            self.disable_row(r - 1)
+
+        row_entries = []        #represents one word (list of letters)
+        for c in range(self.cols):
+            entry = CharEntry(self.grid_container, width=2, font=("Arial", 20), justify="center")
+            entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
+            entry.config(validate="key")
+            entry['validatecommand'] = (entry.register(self.limit_char), "%P")
+
+            # auto-advance binding
+            #r = row (as in for loop); c, ditto
+            entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
+            row_entries.append(entry)
+
+        self.entries.append(row_entries)
+
+        #should this move?
         # Center the grid
         self.grid_container.update_idletasks()
         self.grid_container.pack()
 
+    def add_column(self):
+        """used when setting up new game"""
+        #self.build_grid(self.rows, self.cols + 1)
+        pass
+
+
+    def limit_char(self, new_value:str):
+        """is this used"""
+        return len(new_value) <= 1
 
     def on_key(self, event, row:int, col:int):
         """When keys pressed, moves cursor to next entrybox. 
@@ -97,8 +125,13 @@ class App(tk.Tk):
         key = event.keysym
 
         if key == "Return":
-            pass #needs to call function
-
+            #concatenates row into a string and passes it to interface submit
+            new_word = ''.join(i.get() for i in self.entries[row])
+            if len(new_word) == self._interface.word_length:
+                self._interface.submit(new_word)
+                self.add_row()
+                self.entries[row+1][0].focus_set()          #set focus
+                
         #Move to prev column on backspace
         # - never move to previous row
         # - only move if the widget is empty
@@ -123,16 +156,6 @@ class App(tk.Tk):
 
         #tells tkinter the keypress has already been handled
         return "break" 
-
-    def limit_char(self, new_value):
-        return len(new_value) <= WORD_LEN
-
-    def add_row(self):
-        self.build_grid(self.rows + 1, self.cols)
-
-    def add_column(self):
-        """used when setting up new game"""
-        self.build_grid(self.rows, self.cols + 1)
 
     def clear(self):
         for widget in self.winfo_children():

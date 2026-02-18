@@ -56,8 +56,8 @@ class Puzzle():
     def user_turn(self):
         """Each loop represents one turn of the game: input, validation check, win condition/continue check"""
         #I originally used recursion, but changed to a loop as it's better to avoid memory limitations
-        
-        while not exit: # type: ignore
+        exit = False
+        while not exit:
             print(self._word_route) #testing
             #gets input of correct length
             word = self._interactions.get_word(length=self._len)

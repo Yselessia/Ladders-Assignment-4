@@ -1,4 +1,4 @@
-import csv, Files, Player, gui
+import gui#, csv, Files, Player 
 #from nltk.stem import WordNetLemmatizer as wnl
 from Puzzle import Puzzle
 """
