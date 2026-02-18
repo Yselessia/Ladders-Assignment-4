@@ -1,11 +1,11 @@
 class Interface():
     """Handles interaction with the user/GUI."""
     
-    def get_word(self, length:int=None):
+    def get_word(self, length:int=0):
         #test
         print("enter word")
         iw = input()
-        if length:
+        if length>0:
             while len(iw) != length:
                 iw=input()
         return iw
