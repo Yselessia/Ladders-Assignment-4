@@ -8,6 +8,7 @@ ERRORS = {1:"file is corrupted", 2:"file not found"}
 #FILENAME = "ladders_hiscore.txt" #.csv, reader = csv.reader(f)
  #try:with open(FILENAME,'r') as f:
 puzzle = {"words":{"meat","book"}, "hiscore":3, "player_id":1, "attempts":1}
+DEFAULT_COLUMNS = 4      
 
 """def save_puzzle(self):
     puzzle_dict = {}
@@ -22,8 +23,6 @@ puzzle = {"words":{"meat","book"}, "hiscore":3, "player_id":1, "attempts":1}
 #test - working test
 
 interface1 = gui.Interface()
-
 root_window = gui.App(interface1)
-puzzle1 = Puzzle(interface1, start="meat", target="book")
-puzzle1.user_turn()
+puzzle1 = Puzzle(interface1)
 root_window.mainloop()
