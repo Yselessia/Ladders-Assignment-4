@@ -1,9 +1,12 @@
 # Ladders Assignment 4
 "word ladders" puzzle game
 
-# 19th Feb
-Linked input and output of puzzle and app classes
-Couldn't commit via github as i have no wifi to login to my git account, so saved to my OneDrive.
+# To do
+* fix App.skip_back_to (currently leaves a blank disabled row above the current row)
+* Related: fix set_target, set_start. currently target word disappears permanently as soon Enter is pressed
+* finish App.win_screen
+* must add App.intro_screen for the UX marks
+
 
 # AI use
 https://copilot.microsoft.com/shares/41bvbwcqKaunBxa1m5pPy

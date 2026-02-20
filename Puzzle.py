@@ -1,4 +1,6 @@
 from gui import Interface
+from nltk.stem import WordNetLemmatizer as wnl
+
 DEFAULT_COLUMNS = 4            # Boxes per row
 
 class Puzzle():
@@ -15,15 +17,35 @@ class Puzzle():
         }
         self._interactions.set_callbacks(callbacks)
         self._interactions.state = "get_target"
+        self._interactions.print("Enter target word")
+
+#   ------------
+# INTERACTION WITH APP
+#   ------------
 
     def set_target(self, word:str):
         self._target = word
         self._len = len(self._target) # = DEFAULT_COLUMNS
         self._interactions.state = "get_start"
+        self._interactions.print("Enter starting word.")
+
     def set_start(self, word:str):
         self._word_route = [word]
         self._interactions.state = "new_turn"
+        self._interactions.print("")
  
+    def _skip_back_to(self, word):
+        """If a player enters a word that has already been used, 
+        this deletes the guesses since then  - 
+        decreasing distance from start"""
+        index = self._word_route.index(word)
+        self._word_route = self._word_route[:index + 1]
+        self._interactions.skip_back(index)
+    
+#   ------------
+# VALIDATION CHECKS
+#   ------------
+
     def _rules(self,prev,word):
         """Checks that exactly one letter has been changed from the previous word"""
         match = 0
@@ -38,17 +60,13 @@ class Puzzle():
         """Uses nltk function to check if it's a valid English word"""
         #Morphy checks to find a valid English lemma (root word) for the input, 
         # else returns None
-        if wnl().morphy(word):
+        # must be lowercase
+        if wnl().morphy(word.lower()):
             return True
-         
-    def _skip_back_to(self, word):
-        """If a player enters a word that has already been used, 
-        this deletes the guesses since then  - 
-        decreasing distance from start"""
-        self._word_route = self._word_route[0:self._word_route.index(word)+1]
-        #deleting animation here
-        #self._interactions.*("?") 
-        
+    
+#   ------------
+# GAME TURN
+#   ------------
 
     def user_turn(self, word:str):
         """Represents one turn of the game: input, validation check, win condition/continue check"""
@@ -56,9 +74,10 @@ class Puzzle():
         #validation check
         if not self._rules(self._word_route[-1], word):
             self._interactions.print("You need to change one letter, and keep all the other letters the same")
-        
+            self._skip_back_to(self._word_route[-1])
+
         # 2nd validation check
-        elif self._english(word):
+        elif not self._english(word):
             #invalid word - test
             self._interactions.print("Oops! I don't think that that's a real word")
             self._skip_back_to(self._word_route[-1])
@@ -67,14 +86,16 @@ class Puzzle():
         elif word == self._target:
             self._word_route.append(word)
             self.score = len(self._word_route)-2 #better scoring system?
-            self._interactions.win(self.score)
+            self._interactions.win(score=self.score, start=self._word_route[0], target=self._word_route[-1])
             self._interactions.state = "win"
         
         #for a valid move that's not the win condition, 
         # checks if the word has already been used
         elif word in self._word_route:
+            self._interactions.print("I suppose you want to move backwards?")
             self._skip_back_to(word)
         
         #otherwise, adds the turn and continues.
         else:
             self._word_route.append(word)
+            self._interactions.print("") #clears text

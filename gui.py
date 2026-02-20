@@ -16,34 +16,26 @@ class Interface():
     def __init__(self, ):
         self.word_length = 4
         self._callbacks = {}
-        self.state = "" #should initialise this properly
+        self.state = ""
 
     def set_callbacks(self, callbacks:dict[str, Callable]):
-        self._callbacks.update(callbacks) #appends new callback mappings to dict
+        """Updates dictionary with callback functions"""
+        self._callbacks.update(callbacks)
 
     def submit(self, new_word:str):
         """Passes a string to the Puzzle class"""
-        print(self.state)
+        print(self.state) #testing
         self._callbacks[self.state](new_word)
+
     def print(self, message:str):
         """Passes a string to the App class"""
         self._callbacks["output"](message)
-        
-    def get_word(self, length:int=0):
-        #testing
-        print("enter word")
-        iw = input()
-        if length>0:
-            while len(iw) != length:
-                iw=input()
-        return iw
-    
-    def win(self, score):
-        print(f"you win. score is {score}")
-
-
-
-
+    def skip_back(self,row:int):
+        """Deletes rows from App class"""
+        self._callbacks["skip_back"](row)
+    def win(self, score:int, start:str, target:str):
+        """Switches App class to victory screen"""
+        self._callbacks["win"](str(score))
 
 
 class CharEntry(Entry):
@@ -59,12 +51,39 @@ class App(tk.Tk):
 
         self._interface = interface
         self._output = tk.StringVar()
-        self._interface.set_callbacks({"output":self._output.set})
+        callbacks = {
+                "output":self._output.set
+                ,"skip_back":self.skip_back_to
+                ,"win":self.win_screen
+                ,"restart":self.game_screen
+                     }
+        self._interface.set_callbacks(callbacks)
 
+        self.intro_screen()
+    
+#   ------------
+# CLEARING THE SCREEN
+#   ------------
+
+    def clear(self):
+        """Destroys all widgets"""
+        for widget in self.winfo_children():
+            widget.destroy()
+
+#   ------------
+# APP ACTIVITIES
+#   ------------
+
+    def win_screen(self, score:str="Unknown"):
+        self.state = "win"
+
+    def intro_screen(self):
+        self.state = "intro"
         self.game_screen()
 
+#set self.state
     def game_screen(self):
-        """Builds a canvas with gameplay visuals and interactables"""
+        """Builds a canvas with gameplay visuals and interactables"""        
         self.clear()
         canvas = tk.Canvas(self, width=400, height=400, bg=theme_colours["bg1"], highlightthickness=0)
         canvas = tk.Canvas(self)
@@ -83,6 +102,10 @@ class App(tk.Tk):
         # Build initial grid of char entry-boxes
         self.build_grid()
 
+#   ------------
+# CREATING THE ENTRYBOX GRID
+#   ------------
+
     def build_grid(self, rows:int=1, cols:int=DEFAULT_COLUMNS):
         """Rebuilds the grid with given x y """
         for widget in self.grid_container.winfo_children():
@@ -95,19 +118,13 @@ class App(tk.Tk):
         for r in range(rows):
               self.add_row(r)
 
-    def disable_row(self,row:int):
-        for c in self.entries[row]:
-            c.disable_entry()
+    def add_column(self):
+        pass
 
-    def add_row(self, r:int=-1):
-        # r is the index of the new row in the grid
-        # if a new row is added after grid creation, the number of rows is incremented
-        # and the previous row is disabled (cannot be typed in)
-        if r < 0:
-            r = self.rows
-            self.rows += 1 
-            self.disable_row(r - 1)
-
+    def add_row(self, r:int):
+        #r is the index of the new row in the grid
+        # when self.rows != the actual number of extant rows, r is passed in and this is skipped
+        # needs logic to deal with inserting a row to a different place
         row_entries = []        #represents one word (list of letters)
         for c in range(self.cols):
             entry = CharEntry(self.grid_container, width=2, font=("Arial", 20), justify="center")
@@ -119,35 +136,66 @@ class App(tk.Tk):
             #r = row (as in for loop); c, ditto
             entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
             row_entries.append(entry)
-
-        self.entries.append(row_entries)
+        #fix this
+        self.entries.insert(r, row_entries)
+        self.entries[r][0].focus_set()          #set focus
 
         #should this move?
         # Center the grid
         self.grid_container.update_idletasks()
         self.grid_container.pack()
 
-    def add_column(self):
-        pass
+#   ------------
+# CHANGING THE GRID
+#   ------------
 
-    """
-    def limit_char(self, new_value:str):
-       is this used
-        return len(new_value) <= 1"""
+    def disable_row(self,row:int):
+        for c in self.entries[row]:
+            c.disable_entry()
+
+    def insert_row(self):
+        """Inserts row to the penultimate grid position and disables prev entrys"""
+        #the number of rows is incremented,
+        # a new row is added between the focus and the target word (last row),
+        # and the previous row is disabled (cannot be typed in)
+        r = self.rows - 1
+        self.rows += 1 
+        self.disable_row(r - 1)
+        self.add_row(r)
+
+    def skip_back_to(self, row:int=0):
+        """Deletes rows until it encounters given index. 
+        The row with given index is not deleted. 
+        The last row is not deleted.
+        A new row is inserted after the given index and before the last row"""
+        while self.rows > row + 2:
+            self.remove_row(self.rows - 2)
+        self.insert_row()
+
+    def remove_row(self, row:int):
+        """Removes a row with given index"""
+        self.rows -= 1
+        for widget in self.entries[row]:
+            widget.destroy()
+        del self.entries[row]
+
+#   ------------
+# USER INTERACTIONS
+#   ------------
 
     def on_key(self, event, row:int, col:int):
         """When keys pressed, moves cursor to next entrybox. 
-        Calls function []  if enter key <RETURN> is pressed"""
-        entry = self.entries[row][col]
+        Calls Interface.submit  if enter key <RETURN> is pressed"""
         key = event.keysym
 
+        entry = self.entries[row][col]
         if key == "Return":
             #concatenates row into a string and passes it to interface submit
             new_word = ''.join(i.get() for i in self.entries[row])
             if len(new_word) == self._interface.word_length:
                 self._interface.submit(new_word)
-                self.add_row()                              #create new row
-                self.entries[row+1][0].focus_set()          #set focus
+                #create new row
+                self.insert_row()
                 
         #Move to prev column on backspace
         # - never move to previous row
@@ -173,23 +221,3 @@ class App(tk.Tk):
 
         #tells tkinter the keypress has already been handled
         return "break" 
-
-    def clear(self):
-        for widget in self.winfo_children():
-            widget.destroy()
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    root = App(Interface())
-    #root.overrideredirect(True) # remove window border 
-    #root.config(bg="pink") 
-    #root.wm_attributes("-transparentcolor", "pink")
-    # ^ makes bg transparent and non-interactable, allows for custom window shape
-    # ^ needs more finesse to consistently use the window menu bar (i.e. drag, close, minimise/maximise)
-    root.mainloop()

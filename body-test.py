@@ -1,5 +1,5 @@
 import gui#, csv, Files, Player 
-#from nltk.stem import WordNetLemmatizer as wnl
+from nltk.stem import WordNetLemmatizer as wnl
 from Puzzle import Puzzle
 """
 puzzle_id,player_id,target,start,hiscore,attempts
