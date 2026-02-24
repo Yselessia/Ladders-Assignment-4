@@ -123,8 +123,6 @@ class App(tk.Tk):
 
     def add_row(self, r:int):
         #r is the index of the new row in the grid
-        # when self.rows != the actual number of extant rows, r is passed in and this is skipped
-        # needs logic to deal with inserting a row to a different place
         row_entries = []        #represents one word (list of letters)
         for c in range(self.cols):
             entry = CharEntry(self.grid_container, width=2, font=("Arial", 20), justify="center")
@@ -136,11 +134,10 @@ class App(tk.Tk):
             #r = row (as in for loop); c, ditto
             entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
             row_entries.append(entry)
-        #fix this
+
         self.entries.insert(r, row_entries)
         self.entries[r][0].focus_set()          #set focus
 
-        #should this move?
         # Center the grid
         self.grid_container.update_idletasks()
         self.grid_container.pack()
@@ -158,8 +155,8 @@ class App(tk.Tk):
         #the number of rows is incremented,
         # a new row is added between the focus and the target word (last row),
         # and the previous row is disabled (cannot be typed in)
-        r = self.rows - 1
-        self.rows += 1 
+        r = self.rows - 2 #-1 
+        self.rows += 1  
         self.disable_row(r - 1)
         self.add_row(r)
 
@@ -170,7 +167,6 @@ class App(tk.Tk):
         A new row is inserted after the given index and before the last row"""
         while self.rows > row + 2:
             self.remove_row(self.rows - 2)
-        self.insert_row()
 
     def remove_row(self, row:int):
         """Removes a row with given index"""

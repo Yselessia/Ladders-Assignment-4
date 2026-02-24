@@ -2,8 +2,8 @@
 "word ladders" puzzle game
 
 # To do
-* fix App.skip_back_to (currently leaves a blank disabled row above the current row)
-* Related: fix set_target, set_start. currently target word disappears permanently as soon Enter is pressed
+* fix set_target, set_start. currently target word disappears permanently as soon Enter is pressed. This is due to insert_row being called and inserting to index 0 i think! add_row needs to be modified actually.
+* build a testing module before continuing to work on this.
 * finish App.win_screen
 * must add App.intro_screen for the UX marks
 
