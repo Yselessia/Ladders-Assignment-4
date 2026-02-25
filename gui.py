@@ -24,7 +24,6 @@ class Interface():
 
     def submit(self, new_word:str):
         """Passes a string to the Puzzle class"""
-        print(self.state) #testing
         self._callbacks[self.state](new_word)
 
     def print(self, message:str):
@@ -111,36 +110,51 @@ class App(tk.Tk):
         for widget in self.grid_container.winfo_children():
             widget.destroy()
 
-        self.rows = rows
+        self.rows = 0
         self.cols = cols
         self.entries = []           #list of words
 
-        for r in range(rows):
-              self.add_row(r)
+        self.add_row(0)
+        #move this
+        self.grid_container.update_idletasks()
+        self.grid_container.pack()
+
+
+    def regrid(self, r:int):
+        """Inserts to tkinter grid only the new inserted row and the last row."""
+        # Re-grid the newly inserted row
+        for c, entry in enumerate(self.entries[r]):
+            entry.grid(row=r, column=c)
+        # Re-grid the row that was pushed down
+        if self.rows > 1:
+            for c, entry in enumerate(self.entries[r + 1]):
+                entry.grid(row=r + 1, column=c)
 
     def add_column(self):
         pass
-
+    
     def add_row(self, r:int):
-        #r is the index of the new row in the grid
+        """Create a new row at index r"""
+        self.rows += 1  
+
         row_entries = []        #represents one word (list of letters)
+        
+        #creates row as list of widgets
         for c in range(self.cols):
             entry = CharEntry(self.grid_container, width=2, font=("Arial", 20), justify="center")
-            entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
+            #entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
             entry.config(validate="key")
             #entry['validatecommand'] = (entry.register(self.limit_char), "%P")
 
             # auto-advance binding
-            #r = row (as in for loop); c, ditto
-            entry.bind("<KeyPress>", lambda e, r=r, c=c: self.on_key(e, r, c))
+            entry.bind("<KeyPress>", lambda e, rr=r, cc=c: self.on_key(e, rr, cc))
             row_entries.append(entry)
 
         self.entries.insert(r, row_entries)
-        self.entries[r][0].focus_set()          #set focus
-
-        # Center the grid
-        self.grid_container.update_idletasks()
-        self.grid_container.pack()
+        #adds widgets to window
+        self.regrid(r)
+        #set focus
+        self.entries[r][0].focus_set()          
 
 #   ------------
 # CHANGING THE GRID
@@ -155,9 +169,11 @@ class App(tk.Tk):
         #the number of rows is incremented,
         # a new row is added between the focus and the target word (last row),
         # and the previous row is disabled (cannot be typed in)
-        r = self.rows - 2 #-1 
-        self.rows += 1  
-        self.disable_row(r - 1)
+        r = self.rows - 1 #r will be inserted to the last row index (moving the last row to r+1)
+        if r == 0:
+            self.disable_row(r)
+        else:
+            self.disable_row(r - 1) #disables the penultimate row
         self.add_row(r)
 
     def skip_back_to(self, row:int=0):

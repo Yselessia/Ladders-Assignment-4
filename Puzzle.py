@@ -17,7 +17,6 @@ class Puzzle():
         }
         self._interactions.set_callbacks(callbacks)
         self._interactions.state = "get_target"
-        self._interactions.print("Enter target word")
 
 #   ------------
 # INTERACTION WITH APP

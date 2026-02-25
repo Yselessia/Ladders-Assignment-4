@@ -2,10 +2,9 @@
 "word ladders" puzzle game
 
 # To do
-* fix set_target, set_start. currently target word disappears permanently as soon Enter is pressed. This is due to insert_row being called and inserting to index 0 i think! add_row needs to be modified actually.
-* build a testing module before continuing to work on this.
 * finish App.win_screen
 * must add App.intro_screen for the UX marks
+* make App.game_screen pretty
 
 
 # AI use
@@ -54,3 +53,18 @@ def user_turn(self, word):
     # etc.
 ```
 I implemented the suggestions, keeping the majority of logic in user_turn but adding a function to handle user input -\*
+
+https://copilot.microsoft.com/shares/hyQnGczzxsgGkFYPZVB6J
+https://copilot.microsoft.com/shares/gtUssk3z22uJvCxEsrzjw
+asked copilot about unexpected row behaviour when I tried to to insert rows to the grid
+
+essentials of response: 
+You are mixing two different row systems:
+| What you think is happening      | What Tkinter is actually doing |
+| ----------- | ----------- |
+|   What you think is happening             |	What Tkinter is actually doing      |
+|   self.entries controls the grid          |	.grid(row=...) controls the grid    |
+|   Inserting into self.entries shifts rows |	Tkinter does not shift grid rows    |
+|   Row 0 stays row 0 |	Row 0 gets overwritten |
+
+*copilot then generated a function, regrid_last_two_rows, which I added to my code as well as modifying add_row*
