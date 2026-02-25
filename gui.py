@@ -1,13 +1,17 @@
 import tkinter as tk
 from tkinter import Entry, Label
 from typing import Callable
+from TkGifWidget import AnimatedGif #add to main
 
 # -----------------------------
 # CONFIG
 # -----------------------------
 theme_colours = {}
 theme_colours["bg1"] = "#f0e0d0"
-theme_colours["highlight"] = "#ff4f4f"
+theme_colours["highlight"] = "#f94f4f"
+theme_colours["bg2"] = "#f999a9"
+theme_colours["accent"] = "#55c5a5"
+INSTRUCTIONS = "Do this then this then \n this"
 BOX_SIZE = 50                  # Square input box size
 DEFAULT_COLUMNS = 4            # Boxes per row
 
@@ -45,7 +49,7 @@ class App(tk.Tk):
     def __init__(self, interface:Interface):
         super().__init__()
         self.title("LLLL")
-        self.geometry("900x700")
+        self.geometry("800x600")
         self.configure(bg=theme_colours["bg1"])
 
         self._interface = interface
@@ -57,8 +61,8 @@ class App(tk.Tk):
                 ,"restart":self.game_screen
                      }
         self._interface.set_callbacks(callbacks)
-
-        self.intro_screen()
+        self.win_screen() #testing
+        #self.intro_screen()
     
 #   ------------
 # CLEARING THE SCREEN
@@ -74,24 +78,48 @@ class App(tk.Tk):
 #   ------------
 
     def win_screen(self, score:str="Unknown"):
-        self.state = "win"
+        self.clear()
+        canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
+        canvas.pack(expand=True, fill="both", padx=40, pady=40)
+        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg1"])
+        title.pack(pady=10)
+        if score == "0":
+            win_message = f"You got a perfect score!\n Your score is 0."
+        else:
+            win_message = f"Your score was: {score}! Nice!\nPlay again to get an even lower score "
+
+        label_output = tk.Label(canvas, text=win_message, font=("Arial", 12,"bold"), bg=theme_colours["accent"])
+        label_output.pack(pady=10)
+
+        confetti = AnimatedGif(file_path='confetti.gif', play_mode='hover', loop=1,)
+        confetti.pack()
+        #play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=theme_colours["accent"])#, fg=theme_colours["bg1"])
+        #play_button.pack(pady=10) #fix padding later !!
 
     def intro_screen(self):
-        self.state = "intro"
-        self.game_screen()
+        """Builds a canvas with instructions and button to progress to new game"""        
+        self.clear()
+        canvas = tk.Canvas(self, bg=theme_colours["bg2"], highlightthickness=0)
+        canvas.pack(expand=True, fill="both", padx=40, pady=40)
+        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg2"])
+        title.pack(pady=10)
 
-#set self.state
+        label_output = tk.Label(canvas, text=INSTRUCTIONS, font=("Arial", 12,"bold"), bg=theme_colours["bg2"])
+        label_output.pack(pady=10)
+
+        play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=theme_colours["accent"])#, fg=theme_colours["bg1"])
+        play_button.pack(pady=10) #fix padding later !!
+
     def game_screen(self):
         """Builds a canvas with gameplay visuals and interactables"""        
         self.clear()
-        canvas = tk.Canvas(self, width=400, height=400, bg=theme_colours["bg1"], highlightthickness=0)
-        canvas = tk.Canvas(self)
+        canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
         canvas.pack(expand=True, fill="both", padx=40, pady=40)
 
         title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg1"])
         title.pack(pady=10)
 
-        label_output = tk.Label(canvas, textvariable=self._output, font=("Arial", 12,"bold"), highlightcolor=theme_colours["highlight"], bg=theme_colours["bg1"])
+        label_output = tk.Label(canvas, textvariable=self._output, font=("Arial", 12,"bold"), bg=theme_colours["highlight"])
         label_output.pack(pady=10)
         
         # Container for the dynamic grid
@@ -118,7 +146,6 @@ class App(tk.Tk):
         #move this
         self.grid_container.update_idletasks()
         self.grid_container.pack()
-
 
     def regrid(self, r:int):
         """Inserts to tkinter grid only the new inserted row and the last row."""
@@ -206,8 +233,10 @@ class App(tk.Tk):
             new_word = ''.join(i.get() for i in self.entries[row])
             if len(new_word) == self._interface.word_length:
                 self._interface.submit(new_word)
-                #create new row
-                self.insert_row()
+
+                #creates new row to continue the game
+                if not self._interface.state == "win":
+                    self.insert_row()  
                 
         #Move to prev column on backspace
         # - never move to previous row

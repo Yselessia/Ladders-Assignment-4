@@ -45,15 +45,19 @@ class Puzzle():
 # VALIDATION CHECKS
 #   ------------
 
-    def _rules(self,prev,word):
-        """Checks that exactly one letter has been changed from the previous word"""
+    def _match_int(self,prev,word):
+        """Returns integer representing the number of matching letters between two words"""
         match = 0
-        #match represents the # of letters which match between the words
         for i in range(self._len):
             if word[i]==prev[i]:
                 match+=1
-        if match == self._len-1:
+        return match
+
+    def _rules(self,prev,word):
+        """Checks that exactly one letter has been changed from the previous word"""
+        if self._match_int(prev, word) == self._len-1:
             return True
+        return False
 
     def _english(self, word):
         """Uses nltk function to check if it's a valid English word"""
@@ -83,10 +87,13 @@ class Puzzle():
 
         #win condition check
         elif word == self._target:
-            self._word_route.append(word)
-            self.score = len(self._word_route)-2 #better scoring system?
-            self._interactions.win(score=self.score, start=self._word_route[0], target=self._word_route[-1])
+            self._word_route.append(word) #if u remove this, change score calculation as well
+            
+            #calculates score as (number of turns) minus (minimum number of turns to win)
+            score = (len(self._word_route) - 2) - (self._len - self._match_int(self._word_route[0], self._target))
+            
             self._interactions.state = "win"
+            self._interactions.win(score=score, start=self._word_route[0], target=self._target)
         
         #for a valid move that's not the win condition, 
         # checks if the word has already been used

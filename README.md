@@ -2,9 +2,11 @@
 "word ladders" puzzle game
 
 # To do
-* finish App.win_screen
-* must add App.intro_screen for the UX marks
-* make App.game_screen pretty
+* win screen gif need to be transparent or set as background.
+* load instructions from a txt file (optional)
+
+# Sources used
+https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGJjdjd3bHExMWJla21yd2w2YXBoYm52eGpwNjFoZ2UzYXZtMHV6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/vNg7NlqbP7IcybItRI/giphy.gif
 
 
 # AI use
@@ -68,3 +70,8 @@ You are mixing two different row systems:
 |   Row 0 stays row 0 |	Row 0 gets overwritten |
 
 *copilot then generated a function, regrid_last_two_rows, which I added to my code as well as modifying add_row*
+
+*pasted a tkinter error readout into copilot.*
+response: self (the entry widget) has already been destroyed
+
+https://chatgpt.com/s/t_699f0f815e688191b25c242581906cc3
