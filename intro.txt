@@ -1,0 +1,5 @@
+First, enter a word as your target.
+You're going to try to get to this from the start word.
+Each turn, you can change one letter to make a new word.
+Try to get to the target in as few turns as possible.
+When you get there, you'll see your score - the lower the score the better!

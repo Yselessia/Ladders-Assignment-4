@@ -23,13 +23,17 @@ class Puzzle():
 #   ------------
 
     def set_target(self, word:str):
+        """Sets target word. get_start will reset Puzzle instance."""
         self._target = word
-        self._len = len(self._target) # = DEFAULT_COLUMNS
         self._interactions.state = "get_start"
         self._interactions.print("Enter starting word.")
 
     def set_start(self, word:str):
+        """Sets start word. Must be called after set_target. Resets all properties of Puzzle instance"""
+        #note that this clears anything in _word_route from a previous game
+        # and sets it to just the new word.
         self._word_route = [word]
+        self._len = len(self._target) # = DEFAULT_COLUMNS
         self._interactions.state = "new_turn"
         self._interactions.print("")
  
@@ -90,7 +94,7 @@ class Puzzle():
             self._word_route.append(word) #if u remove this, change score calculation as well
             
             #calculates score as (number of turns) minus (minimum number of turns to win)
-            score = (len(self._word_route) - 2) - (self._len - self._match_int(self._word_route[0], self._target))
+            score = (len(self._word_route) - 1) - (self._len - self._match_int(self._word_route[0], self._target))
             
             self._interactions.state = "win"
             self._interactions.win(score=score, start=self._word_route[0], target=self._target)

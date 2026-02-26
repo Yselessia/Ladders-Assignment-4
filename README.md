@@ -2,8 +2,8 @@
 "word ladders" puzzle game
 
 # To do
-* win screen gif need to be transparent or set as background.
-* load instructions from a txt file (optional)
+* get # columns from intro screen
+* write to a file?
 
 # Sources used
 https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGJjdjd3bHExMWJla21yd2w2YXBoYm52eGpwNjFoZ2UzYXZtMHV6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/vNg7NlqbP7IcybItRI/giphy.gif

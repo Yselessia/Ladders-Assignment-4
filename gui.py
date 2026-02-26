@@ -2,18 +2,17 @@ import tkinter as tk
 from tkinter import Entry, Label
 from typing import Callable
 from TkGifWidget import AnimatedGif #add to main
-
 # -----------------------------
 # CONFIG
 # -----------------------------
 theme_colours = {}
 theme_colours["bg1"] = "#f0e0d0"
-theme_colours["highlight"] = "#f94f4f"
+theme_colours["highlight"] = "#020202"
 theme_colours["bg2"] = "#f999a9"
 theme_colours["accent"] = "#55c5a5"
-INSTRUCTIONS = "Do this then this then \n this"
 BOX_SIZE = 50                  # Square input box size
 DEFAULT_COLUMNS = 4            # Boxes per row
+INSTRUCTIONS = ""
 
 class Interface():
     """Handles interaction with the user/GUI."""
@@ -39,18 +38,20 @@ class Interface():
     def win(self, score:int, start:str, target:str):
         """Switches App class to victory screen"""
         self._callbacks["win"](str(score))
-
+    def reset_game(self):
+        """Resets state to reinitialise puzzle properties. Calls game screen from App"""
+        self.state = "get_target"
+        self._callbacks["restart"]()
 
 class CharEntry(Entry):
     def disable_entry(self):
         self.configure(state="disabled", disabledbackground=theme_colours["bg1"])
 
 class App(tk.Tk):
-    def __init__(self, interface:Interface):
+    def __init__(self, interface:Interface, instructions:str):
         super().__init__()
         self.title("LLLL")
-        self.geometry("800x600")
-        self.configure(bg=theme_colours["bg1"])
+        self.geometry("540x600") #should be 800x600?
 
         self._interface = interface
         self._output = tk.StringVar()
@@ -61,8 +62,7 @@ class App(tk.Tk):
                 ,"restart":self.game_screen
                      }
         self._interface.set_callbacks(callbacks)
-        self.win_screen() #testing
-        #self.intro_screen()
+        self.intro_screen(instructions)
     
 #   ------------
 # CLEARING THE SCREEN
@@ -81,30 +81,33 @@ class App(tk.Tk):
         self.clear()
         canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
         canvas.pack(expand=True, fill="both", padx=40, pady=40)
-        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg1"])
+        title = tk.Label(canvas, text="Victory!", font=("Arial", 20), bg=theme_colours["bg1"])
         title.pack(pady=10)
         if score == "0":
             win_message = f"You got a perfect score!\n Your score is 0."
         else:
-            win_message = f"Your score was: {score}! Nice!\nPlay again to get an even lower score "
+            win_message = f"Your score was: {score}! Nice!\nPlay again to get closer to 0"
 
         label_output = tk.Label(canvas, text=win_message, font=("Arial", 12,"bold"), bg=theme_colours["accent"])
         label_output.pack(pady=10)
 
-        confetti = AnimatedGif(file_path='confetti.gif', play_mode='hover', loop=1,)
-        confetti.pack()
-        #play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=theme_colours["accent"])#, fg=theme_colours["bg1"])
-        #play_button.pack(pady=10) #fix padding later !!
+        # Create a celebratory GIF widget
+        confetti = AnimatedGif(file_path='confetti.gif', play_mode='hover', loop=1)
+        confetti.pack(fill="x")
+        play_button = tk.Button(canvas, text="New Game", command=self._interface.reset_game, bg=theme_colours["accent"])
+        play_button.pack(pady=10) #fix padding later !!
 
-    def intro_screen(self):
+    def intro_screen(self, instructions:str):
         """Builds a canvas with instructions and button to progress to new game"""        
         self.clear()
+        self.configure(bg=theme_colours["bg2"])
         canvas = tk.Canvas(self, bg=theme_colours["bg2"], highlightthickness=0)
         canvas.pack(expand=True, fill="both", padx=40, pady=40)
-        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg2"])
+   
+        title = tk.Label(canvas, text="How to Play", font=("Arial", 20), bg=theme_colours["bg2"])
         title.pack(pady=10)
 
-        label_output = tk.Label(canvas, text=INSTRUCTIONS, font=("Arial", 12,"bold"), bg=theme_colours["bg2"])
+        label_output = tk.Label(canvas, text=instructions, font=("Arial", 12,"bold"), bg=theme_colours["bg2"], wraplength=400)
         label_output.pack(pady=10)
 
         play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=theme_colours["accent"])#, fg=theme_colours["bg1"])
@@ -113,10 +116,11 @@ class App(tk.Tk):
     def game_screen(self):
         """Builds a canvas with gameplay visuals and interactables"""        
         self.clear()
+        self.configure(bg=theme_colours["bg1"])
         canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
         canvas.pack(expand=True, fill="both", padx=40, pady=40)
 
-        title = tk.Label(canvas, text="MMMM", font=("Arial", 20), bg=theme_colours["bg1"])
+        title = tk.Label(canvas, text="Ladders", font=("Arial", 20), bg=theme_colours["bg1"])
         title.pack(pady=10)
 
         label_output = tk.Label(canvas, textvariable=self._output, font=("Arial", 12,"bold"), bg=theme_colours["highlight"])
@@ -127,13 +131,13 @@ class App(tk.Tk):
         self.grid_container.pack(pady=20)
 
         # Build initial grid of char entry-boxes
-        self.build_grid()
+        self.build_grid(DEFAULT_COLUMNS)
 
 #   ------------
 # CREATING THE ENTRYBOX GRID
 #   ------------
 
-    def build_grid(self, rows:int=1, cols:int=DEFAULT_COLUMNS):
+    def build_grid(self, cols:int):
         """Rebuilds the grid with given x y """
         for widget in self.grid_container.winfo_children():
             widget.destroy()
@@ -262,3 +266,7 @@ class App(tk.Tk):
 
         #tells tkinter the keypress has already been handled
         return "break" 
+
+        
+
+
