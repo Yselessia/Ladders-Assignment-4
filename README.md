@@ -2,8 +2,9 @@
 "word ladders" puzzle game
 
 # To do
-* get # columns from intro screen
-* write to a file?
+realised morphy doesn't work for all words.
+* add another dictionary checker
+* add nltk download/install?
 
 # Sources used
 https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGJjdjd3bHExMWJla21yd2w2YXBoYm52eGpwNjFoZ2UzYXZtMHV6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/vNg7NlqbP7IcybItRI/giphy.gif

@@ -1,18 +1,11 @@
 import tkinter as tk
-from tkinter import Entry, Label
 from typing import Callable
-from TkGifWidget import AnimatedGif #add to main
+from TkGifWidget import AnimatedGif
+
 # -----------------------------
 # CONFIG
 # -----------------------------
-theme_colours = {}
-theme_colours["bg1"] = "#f0e0d0"
-theme_colours["highlight"] = "#020202"
-theme_colours["bg2"] = "#f999a9"
-theme_colours["accent"] = "#55c5a5"
-BOX_SIZE = 50                  # Square input box size
-DEFAULT_COLUMNS = 4            # Boxes per row
-INSTRUCTIONS = ""
+
 
 class Interface():
     """Handles interaction with the user/GUI."""
@@ -43,16 +36,16 @@ class Interface():
         self.state = "get_target"
         self._callbacks["restart"]()
 
-class CharEntry(Entry):
-    def disable_entry(self):
-        self.configure(state="disabled", disabledbackground=theme_colours["bg1"])
 
 class App(tk.Tk):
-    def __init__(self, interface:Interface, instructions:str):
+    def __init__(self, interface:Interface, instructions:str, theme:dict={}):
+        #   CONFIG
         super().__init__()
         self.title("LLLL")
         self.geometry("540x600") #should be 800x600?
+        self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
+        #   INTERFACE
         self._interface = interface
         self._output = tk.StringVar()
         callbacks = {
@@ -62,165 +55,46 @@ class App(tk.Tk):
                 ,"restart":self.game_screen
                      }
         self._interface.set_callbacks(callbacks)
+
+        #   DISPLAY
+        self.set_theme(theme)
+        self.configure( bg=self._theme[ "bg1"])
         self.intro_screen(instructions)
     
+    
 #   ------------
-# CLEARING THE SCREEN
+# UTILITIES
 #   ------------
 
+    def on_exit(self):
+        """Runs before Tkinter window quits
+          to make the user confirm once before closing the window, 
+          if they have a game is in progress
+          """
+        
+        exit_confirmation_mssg = "Click again to close window. Your game progress will be lost."
+        if self._interface.state == "new_turn" and self._output.get() != exit_confirmation_mssg:
+            self._output.set(exit_confirmation_mssg)
+        else:
+            super().quit()
+
+    def set_theme(self, theme:dict):
+        """Sets _theme property. Verifies that all colour keys are present."""
+        self._theme = theme
+        default_theme = {
+                "bg1"       : "#f0e0d0",
+                "highlight" : "#ff0000",
+                "bg2"       : "#55aaff",
+                "accent"    : "#55aaff"
+                        }
+        for key in default_theme.keys():
+            if key not in self._theme:
+                self._theme[key] = default_theme[key]
+        
     def clear(self):
         """Destroys all widgets"""
         for widget in self.winfo_children():
             widget.destroy()
-
-#   ------------
-# APP ACTIVITIES
-#   ------------
-
-    def win_screen(self, score:str="Unknown"):
-        self.clear()
-        canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
-        canvas.pack(expand=True, fill="both", padx=40, pady=40)
-        title = tk.Label(canvas, text="Victory!", font=("Arial", 20), bg=theme_colours["bg1"])
-        title.pack(pady=10)
-        if score == "0":
-            win_message = f"You got a perfect score!\n Your score is 0."
-        else:
-            win_message = f"Your score was: {score}! Nice!\nPlay again to get closer to 0"
-
-        label_output = tk.Label(canvas, text=win_message, font=("Arial", 12,"bold"), bg=theme_colours["accent"])
-        label_output.pack(pady=10)
-
-        # Create a celebratory GIF widget
-        confetti = AnimatedGif(file_path='confetti.gif', play_mode='hover', loop=1)
-        confetti.pack(fill="x")
-        play_button = tk.Button(canvas, text="New Game", command=self._interface.reset_game, bg=theme_colours["accent"])
-        play_button.pack(pady=10) #fix padding later !!
-
-    def intro_screen(self, instructions:str):
-        """Builds a canvas with instructions and button to progress to new game"""        
-        self.clear()
-        self.configure(bg=theme_colours["bg2"])
-        canvas = tk.Canvas(self, bg=theme_colours["bg2"], highlightthickness=0)
-        canvas.pack(expand=True, fill="both", padx=40, pady=40)
-   
-        title = tk.Label(canvas, text="How to Play", font=("Arial", 20), bg=theme_colours["bg2"])
-        title.pack(pady=10)
-
-        label_output = tk.Label(canvas, text=instructions, font=("Arial", 12,"bold"), bg=theme_colours["bg2"], wraplength=400)
-        label_output.pack(pady=10)
-
-        play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=theme_colours["accent"])#, fg=theme_colours["bg1"])
-        play_button.pack(pady=10) #fix padding later !!
-
-    def game_screen(self):
-        """Builds a canvas with gameplay visuals and interactables"""        
-        self.clear()
-        self.configure(bg=theme_colours["bg1"])
-        canvas = tk.Canvas(self, bg=theme_colours["bg1"], highlightthickness=0)
-        canvas.pack(expand=True, fill="both", padx=40, pady=40)
-
-        title = tk.Label(canvas, text="Ladders", font=("Arial", 20), bg=theme_colours["bg1"])
-        title.pack(pady=10)
-
-        label_output = tk.Label(canvas, textvariable=self._output, font=("Arial", 12,"bold"), bg=theme_colours["highlight"])
-        label_output.pack(pady=10)
-        
-        # Container for the dynamic grid
-        self.grid_container = tk.Frame(canvas, bg=theme_colours["bg1"])
-        self.grid_container.pack(pady=20)
-
-        # Build initial grid of char entry-boxes
-        self.build_grid(DEFAULT_COLUMNS)
-
-#   ------------
-# CREATING THE ENTRYBOX GRID
-#   ------------
-
-    def build_grid(self, cols:int):
-        """Rebuilds the grid with given x y """
-        for widget in self.grid_container.winfo_children():
-            widget.destroy()
-
-        self.rows = 0
-        self.cols = cols
-        self.entries = []           #list of words
-
-        self.add_row(0)
-        #move this
-        self.grid_container.update_idletasks()
-        self.grid_container.pack()
-
-    def regrid(self, r:int):
-        """Inserts to tkinter grid only the new inserted row and the last row."""
-        # Re-grid the newly inserted row
-        for c, entry in enumerate(self.entries[r]):
-            entry.grid(row=r, column=c)
-        # Re-grid the row that was pushed down
-        if self.rows > 1:
-            for c, entry in enumerate(self.entries[r + 1]):
-                entry.grid(row=r + 1, column=c)
-
-    def add_column(self):
-        pass
-    
-    def add_row(self, r:int):
-        """Create a new row at index r"""
-        self.rows += 1  
-
-        row_entries = []        #represents one word (list of letters)
-        
-        #creates row as list of widgets
-        for c in range(self.cols):
-            entry = CharEntry(self.grid_container, width=2, font=("Arial", 20), justify="center")
-            #entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
-            entry.config(validate="key")
-            #entry['validatecommand'] = (entry.register(self.limit_char), "%P")
-
-            # auto-advance binding
-            entry.bind("<KeyPress>", lambda e, rr=r, cc=c: self.on_key(e, rr, cc))
-            row_entries.append(entry)
-
-        self.entries.insert(r, row_entries)
-        #adds widgets to window
-        self.regrid(r)
-        #set focus
-        self.entries[r][0].focus_set()          
-
-#   ------------
-# CHANGING THE GRID
-#   ------------
-
-    def disable_row(self,row:int):
-        for c in self.entries[row]:
-            c.disable_entry()
-
-    def insert_row(self):
-        """Inserts row to the penultimate grid position and disables prev entrys"""
-        #the number of rows is incremented,
-        # a new row is added between the focus and the target word (last row),
-        # and the previous row is disabled (cannot be typed in)
-        r = self.rows - 1 #r will be inserted to the last row index (moving the last row to r+1)
-        if r == 0:
-            self.disable_row(r)
-        else:
-            self.disable_row(r - 1) #disables the penultimate row
-        self.add_row(r)
-
-    def skip_back_to(self, row:int=0):
-        """Deletes rows until it encounters given index. 
-        The row with given index is not deleted. 
-        The last row is not deleted.
-        A new row is inserted after the given index and before the last row"""
-        while self.rows > row + 2:
-            self.remove_row(self.rows - 2)
-
-    def remove_row(self, row:int):
-        """Removes a row with given index"""
-        self.rows -= 1
-        for widget in self.entries[row]:
-            widget.destroy()
-        del self.entries[row]
 
 #   ------------
 # USER INTERACTIONS
@@ -267,6 +141,155 @@ class App(tk.Tk):
         #tells tkinter the keypress has already been handled
         return "break" 
 
+
+#   ------------
+# APP ACTIVITIES
+#   ------------
+
+    def win_screen(self, score:str="Unknown"):
+        self.clear()
+        canvas = tk.Canvas(self, bg=self._theme[ "accent"])#, highlightthickness=0)
+        canvas.pack(expand=True, fill="x", padx=40, pady=40)
         
+        title = tk.Label(canvas, text="Victory!", font=("Arial", 20), bg=self._theme[ "accent"])
+        title.pack(pady=10)
+        if score == "0":
+            win_message = f"You got a perfect score!\n Your score is 0."
+        else:
+            win_message = f"Your score was: {score}! Nice!\nPlay again to get closer to 0"
+
+        label_output = tk.Label(canvas, text=win_message, font=("Arial", 12,"bold"), bg=self._theme[ "accent"])
+        label_output.pack(pady=10)
+
+        # Create a celebratory GIF widget
+        confetti = AnimatedGif(file_path='confetti.gif', play_mode='hover', loop=1)
+        confetti.pack()#fill="x")
+        play_button = tk.Button(canvas, text="New Game", command=self._interface.reset_game, bg=self._theme[ "bg2"])
+        play_button.pack(pady=10) #fix padding later !!
+
+    def intro_screen(self, instructions:str):
+        """Builds a canvas with instructions and button to progress to new game"""        
+        self.clear()
+        canvas = tk.Canvas(self, bg=self._theme[ "bg1"], highlightthickness=0)
+        canvas.pack(expand=True, fill="both", padx=40, pady=40)
+   
+        title = tk.Label(canvas, text="How to Play", font=("Arial", 20), bg=self._theme[ "bg1"])
+        title.pack(pady=10)
+
+        label_output = tk.Label(canvas, text=instructions, font=("Arial", 12,"bold"), bg=self._theme[ "bg1"], wraplength=400)
+        label_output.pack(pady=10)
+
+        play_button = tk.Button(canvas, text="New Game", command=self.game_screen, bg=self._theme[ "bg2"])
+        play_button.pack(pady=10) #fix padding later !!
+
+    def game_screen(self):
+        """Builds a canvas with gameplay visuals and interactables"""        
+        self.clear()
+        canvas = tk.Canvas(self, bg=self._theme[ "bg1"], highlightthickness=0)
+        canvas.pack(expand=True, fill="both", padx=40, pady=40)
+
+        title = tk.Label(canvas, text="Word Ladders", font=("Arial", 20), bg=self._theme[ "bg1"])
+        title.pack(pady=10)
+
+        label_output = tk.Label(canvas, textvariable=self._output, font=("Arial", 12,"bold"), bg=self._theme[ "highlight"], wraplength=400)
+        label_output.pack(pady=10)
+        
+        # Container for the dynamic grid
+        self.grid_container = tk.Frame(canvas, bg=self._theme[ "bg1"])
+        self.grid_container.pack(pady=20)
+
+        # Build initial grid of char entry-boxes
+        self.build_grid(4)
 
 
+#   ------------
+# CREATING THE ENTRYBOX GRID
+#   ------------
+
+    def build_grid(self, cols:int):
+        """Rebuilds the grid with given x y """
+        for widget in self.grid_container.winfo_children():
+            widget.destroy()
+
+        self.rows = 0
+        self.cols = cols
+        self.entries = []           #list of words
+
+        self.add_row(0)
+        #move this
+        self.grid_container.update_idletasks()
+        self.grid_container.pack()
+
+    def regrid(self, r:int):
+        """Inserts to tkinter grid only the new inserted row and the last row."""
+        # Re-grid the newly inserted row
+        for c, entry in enumerate(self.entries[r]):
+            entry.grid(row=r, column=c)
+        # Re-grid the row that was pushed down
+        if self.rows > 1:
+            for c, entry in enumerate(self.entries[r + 1]):
+                entry.grid(row=r + 1, column=c)
+
+    def add_column(self):
+        pass
+    
+    def add_row(self, r:int):
+        """Create a new row at index r"""
+        self.rows += 1  
+
+        row_entries = []        #represents one word (list of letters)
+        
+        #creates row as list of widgets
+        for c in range(self.cols):
+            entry = tk.Entry(self.grid_container, width=2, font=("Arial", 20), justify="center")
+            #entry.grid(row=r, column=c, padx=5, pady=5, ipadx=10, ipady=10)
+            entry.config(validate="key")
+            #entry['validatecommand'] = (entry.register(self.limit_char), "%P")
+
+            # auto-advance binding
+            entry.bind("<KeyPress>", lambda e, rr=r, cc=c: self.on_key(e, rr, cc))
+            row_entries.append(entry)
+
+        self.entries.insert(r, row_entries)
+        #adds widgets to window
+        self.regrid(r)
+        #set focus
+        self.entries[r][0].focus_set()          
+
+
+#   ------------
+# CHANGING THE GRID
+#   ------------
+
+    def disable_row(self,row:int, disabled_colour:str=""):
+        if not (disabled_colour in self._theme):
+            disabled_colour = "bg1"
+        for c in self.entries[row]:
+            c.configure(state="disabled", disabledbackground=self._theme[ disabled_colour])
+
+    def insert_row(self):
+        """Inserts row to the penultimate grid position and disables prev entrys"""
+        #the number of rows is incremented,
+        # a new row is added between the focus and the target word (last row),
+        # and the previous row is disabled (cannot be typed in)
+        r = self.rows - 1 #r will be inserted to the last row index (moving the last row to r+1)
+        if r == 0:
+            self.disable_row(r,"accent")
+        else:
+            self.disable_row(r - 1) #disables the penultimate row
+        self.add_row(r)
+
+    def skip_back_to(self, row:int=0):
+        """Deletes rows until it encounters given index. 
+        The row with given index is not deleted. 
+        The last row is not deleted.
+        A new row is inserted after the given index and before the last row"""
+        while self.rows > row + 2:
+            self.remove_row(self.rows - 2)
+
+    def remove_row(self, row:int):
+        """Removes a row with given index"""
+        self.rows -= 1
+        for widget in self.entries[row]:
+            widget.destroy()
+        del self.entries[row]

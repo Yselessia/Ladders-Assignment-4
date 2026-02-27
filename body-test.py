@@ -1,13 +1,8 @@
-import gui#, csv, Files, Player 
-from nltk.stem import WordNetLemmatizer as wnl
+import gui
 from Puzzle import Puzzle
-"""
-puzzle_id,player_id,target,start,hiscore,attempts
-"""
-ERRORS = {1:"file is corrupted", 2:"file not found"}
-#FILENAME = "ladders_hiscore.txt" #.csv, reader = csv.reader(f)
- #try:with open(FILENAME,'r') as f:
-DEFAULT_COLUMNS = 4      
+
+#testing
+#print( "TRUE" if wnl().morphy("this".lower()) else "FALSE")
 
 try:
     f = open("intro.txt", "r")
@@ -15,9 +10,15 @@ try:
 except:
     INSTRUCTIONS = "File not read"
 
-#test - working test
 
-interface1 = gui.Interface()
-root_window = gui.App(interface1, INSTRUCTIONS)
-puzzle1 = Puzzle(interface1)
+THEME = {"bg1"          : "#f0e0d0",
+            "highlight"    : "#f94f4f",
+            "bg2"          : "#f999a9",
+            "accent"       : "#55c5a5"
+}
+
+
+interface = gui.Interface()
+root_window = gui.App(interface, INSTRUCTIONS, THEME)
+puzzle = Puzzle(interface)
 root_window.mainloop()
